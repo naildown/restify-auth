@@ -18,7 +18,7 @@
     "Bearer"
   ],
   "author": "shawn",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@types/jsonwebtoken": "^8.5.8",
     "@types/restify": "^8.5.4",
