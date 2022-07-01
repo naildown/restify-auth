@@ -1,5 +1,5 @@
 # Restify-auth
-A Restify authorization middleware based on the jsonwebtoken module.
+A Restify authorization middleware based on the [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) module.
 
 ## Options
 
@@ -10,10 +10,8 @@ Options has the following parameters:
 - **algorithm?**: jwt.Algorithm. Defines JWT algorithm, default to "HS256".
 - **expiresIn?**: string || number. Defines expiration time of token, default to "1h" (1 hour).
 - **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1].
-    For example, expiresIn is '10 days' and resresh is 0.7, then:
-    from day 1 to day 3, token is valid;
-    from day 4 to day 10, the token is valid and a new token will be sent to the client;
-    from day 11, the token expires.
+    For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).
+    With this options, if the user has a valid token and accesses the server within a valid time, then the user can always log in without a password.
     Defaults to 0, the token will not refresh automatically. 
 - **signOptions?**: jwt.SignOptions. Use this option to pass full JWT signing options when needed. It will override the `secret`, `algorithm` and `expiresIn`.
 - **verifyOptions?**: jwt.VerifyOptions. Use this option to pass full JWT verifying options when needed. It will override the `secret`, `algorithm` and `expiresIn`.
@@ -34,7 +32,7 @@ npm i -S restify-auth
 ## Usage
 ### Basic usage (default algorithm is HS256).
 ```
-import { restifyAuth } from '../index';
+import { restifyAuth } from 'restify-auth';
 
 server.get(
   '/test', 
@@ -47,7 +45,7 @@ server.get(
 1. restify server code.
 ```
 import { createServer, plugins } from 'restify';
-import { restifyAuth } from '../index';
+import { restifyAuth } from 'restify-auth';
 
 const server = createServer({
   name: 'test-server',
@@ -126,4 +124,105 @@ Connection: keep-alive
 Keep-Alive: timeout=5
 
 {"code":"Unauthorized","message":"token is required"}
+```
+
+### Set expiration and refresh range
+
+```
+const auth = restifyAuth({
+  secret: 'test-secret',
+  expiresIn: '15m',   // token will be expired in 15 minutes.
+})
+```
+```
+const auth = restifyAuth({
+  secret: 'test-secret',
+  expiresIn: '10d',  // token will be expired in 10 days
+  refreshRange: 0.6,
+  // when the user accesses server with a valid token at:
+  //   day 1 to day 4, authorization is passed;
+  //   day 5 to day 10, authorization is passed and a new issued token is sent to the client;
+  //   after day 11, authorization will be failed if the token has not been updated;
+})
+```
+
+### Use full jwt sign/verify options
+- Refer to [jsonwebtoken#usage](https://www.npmjs.com/package/jsonwebtoken#usage)
+```
+const auth = restifyAuth({
+  secret: 'test-secret',
+  signOptions: {
+    algorithm: 'HS256',
+    expiresIn: '10h',
+    issuer: 'server'
+    audience: 'client01'
+    subject: 'test'
+    ...
+  },
+  verifyOptions: {
+    algorithm: ['HS256'],
+    issuer: 'server'
+    audience: /client\d{2}/
+    subject: 'test'
+    ...
+  },
+})
+```
+
+### Retrieve secret from other sources
+- You can define a funciton to retrieve secret from other sources.
+```
+const auth = restifyAuth({
+  secret: async (req?: Request, decoded?: jwtPayload) => {
+    // retrieve
+    return secret;
+  }
+})
+```
+
+### Additional validation
+- You can define a funciton to perform additional validation when verify/refresh token.
+```
+(async) funciton (req: Request, decoded?: jwtPayload) => {
+  success: boolean,
+  payload?: string | jwt.JwtPayload, // new payload
+  message?: string,
+}
+```
+
+```
+const auth = restifyAuth({
+  secret: 'test-secret',
+  verifyHandler: async (req) => {
+    // ...
+    return {
+      success: !isRevoked(req);
+    }
+  },
+  refreshHandler: async (req, decoded) => {
+    // ...
+    return {
+      success: true,
+      payload: {
+        user: req.query.user,
+        someNewData: '',
+      },
+      message: 'token is valid and need to be refreshed, send a new one',
+    }
+  },
+})
+```
+
+### Error handling
+- `UnauthorizedError` (status: 401) will be thrown when the token is invalid, Restify will send this error to client, you can also add custom logic to handle this error.
+```
+server.on('restifyError', (req, res, err, callback) => {
+  if (err.code === 'Unauthorized') {
+    res.send({
+      success: false,
+      message: 'Login failed.',
+    });
+  }
+  return callback();
+});
 ```
