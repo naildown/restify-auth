@@ -5,7 +5,7 @@ import assert from 'assert';
 import { Request, Response } from 'restify';
 import jwt from 'jsonwebtoken';
 import { describe, it } from 'mocha';
-import { AuthOptions, pickOriginPayload, restifyAuth } from '../src/index';
+import { AuthOptions, pickOriginPayload, restifyAuth } from '../index';
 
 const sleep = (timeToDelay: number) => new Promise(
   (resolve) => {
