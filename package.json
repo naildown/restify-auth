@@ -1,6 +1,6 @@
 {
   "name": "restify-auth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Authorization middleware based on JWT for restify.",
   "main": "index.ts",
   "scripts": {
