@@ -64,7 +64,7 @@ server.use(plugins.bodyParser());
 // use restify-auth middleware
 server.use(auth.authorizer);
 
-server.get('/test', (req, res, next) => {
+server.get('/getauth', (req, res, next) => {
   res.send(req.auth); // if token is valid, the payload is stored to Request.auth.
 });
 
@@ -104,11 +104,11 @@ Keep-Alive: timeout=5
 
 3. Access with correct token, authorization is passed.
 ```
-$ curl -H "authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoidGVzdGVyIiwiaWF0IjoxNjU2NTc4NzkxLCJleHAiOjE2NTY1ODIzOTF9.y_RoXlBaBiznQ8-furj4fA1-EPHCTaZaCc6MSuBsb70" "http://127.0.0.1:9001/payload"
+$ curl -H "authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoidGVzdGVyIiwiaWF0IjoxNjU2NTc4NzkxLCJleHAiOjE2NTY1ODIzOTF9.y_RoXlBaBiznQ8-furj4fA1-EPHCTaZaCc6MSuBsb70" "http://127.0.0.1:9001/getauth"
 {"user":"tester","iat":1656578791,"exp":1656582391}
 ```
 
-3. Access with invalid token or without token, authorization is failed.
+4. Access with invalid token or without token, authorization is failed.
 ```
 $ curl -H "authorization: Bearer 111.222.333" http://127.0.0.1:9001/getauth
 {"code":"Unauthorized","message":"jwt - invalid token."}
