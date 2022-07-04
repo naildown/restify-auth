@@ -1,6 +1,6 @@
 {
   "name": "restify-auth",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A Restify authorization middleware based on the jsonwebtoken module.",
   "main": "index.ts",
   "scripts": {
