@@ -21,6 +21,8 @@ Options has the following parameters:
 - **requestProperty**?: string. Defines property name in request where the JWT payload is placed, default to "auth".
 - **getToken?**: function. Define a function to get the token from somewhere else instead of `authHeader`.
 - **ignored?**: string[]. Defines ignored request list. If the request is in this list, token validation will be ignored. Usually the login path needs to be added to here.
+    Format: [path]|<method1,method2...>,
+    for example: ['/login', '/auth|post', '/test|post,get'].
 - **verifyHandler?**: function. Define a function to perform additional token validation. The default function will return True.
 - **refreshHandler?**: function. Define a function to perform additional token validation and return the new payload for signing token. The default function will return True and the origin payload.
 
