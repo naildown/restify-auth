@@ -9,20 +9,22 @@ Options has the following parameters:
 - **secret**: jwt.Secret. Defines JWT signature secret or a funciton to retrieve it.
 - **algorithm?**: jwt.Algorithm. Defines JWT algorithm, default to "HS256".
 - **expiresIn?**: string || number. Defines expiration time of token, default to "1h" (1 hour).
-  Expressed in seconds or a string describing a time span [zeit/ms](https://github.com/vercel/ms).
-  Eg: 60, "2 days", "10h", "7d". A numeric value is interpreted as a seconds count. If you use a string be sure you provide the time units (days, hours, etc), otherwise milliseconds unit is used by default ("120" is equal to "120ms").
-- **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1].
-    For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).
-    With this options, if the user has a valid token and accesses the server within a valid time, then the user can always log in without a password.
-    Defaults to 0, the token will not refresh automatically. 
+  Expressed in seconds or a string describing a time span [zeit/ms](https://github.com/vercel/ms).  
+  Eg: 60, "2 days", "10h", "7d". A numeric value is interpreted as a seconds count.   
+  If you use a string be sure you provide the time units (days, hours, etc), otherwise milliseconds unit is used by default ("120" is equal to "120ms").
+- **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1].  
+  For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).  
+  With this options, if the user has a valid token and accesses the server within a valid time, then the user can always log in without a password.  
+  Defaults to 0, the token will not refresh automatically. 
 - **signOptions?**: jwt.SignOptions. Use this option to pass full JWT signing options when needed. It will override the `secret`, `algorithm` and `expiresIn`.
 - **verifyOptions?**: jwt.VerifyOptions. Use this option to pass full JWT verifying options when needed. It will override the `secret`, `algorithm` and `expiresIn`.
 - **authHeader?**: string. Defines header name where the token is placed, default to "authorization".
 - **requestProperty**?: string. Defines property name in request where the JWT payload is placed, default to "auth".
 - **getToken?**: function. Define a function to get the token from somewhere else instead of `authHeader`.
-- **ignored?**: string[]. Defines ignored request list. If the request is in this list, token validation will be ignored. Usually the login path needs to be added to here.
-    Format: [path]|<method1,method2...>,
-    for example: ['/login', '/auth|post', '/test|post,get'].
+- **ignored?**: string[]. Defines ignored request list, if the request is in this list, token validation will be ignored.  
+  Usually the login path needs to be added to here.  
+  Format: `<path>|[method1,method2...]`,  
+  for example: `['/login', '/auth|post', '/test|post,get']`.
 - **verifyHandler?**: function. Define a function to perform additional token validation. The default function will return True.
 - **refreshHandler?**: function. Define a function to perform additional token validation and return the new payload for signing token. The default function will return True and the origin payload.
 
