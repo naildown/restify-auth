@@ -16,8 +16,8 @@ Options has the following parameters:
   For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).  
   With this options, if the user has a valid token and accesses the server within a valid time, then the user can always log in without a password.  
   Defaults to 0, the token will not refresh automatically. 
-- **signOptions?**: jwt.SignOptions. Use this option to pass full JWT signing options when needed. It will override the `secret`, `algorithm` and `expiresIn`.
-- **verifyOptions?**: jwt.VerifyOptions. Use this option to pass full JWT verifying options when needed. It will override the `secret`, `algorithm` and `expiresIn`.
+- **signOptions?**: jwt.SignOptions. Use this option to pass full JWT signing options when needed. It will override the `algorithm` and `expiresIn`.
+- **verifyOptions?**: jwt.VerifyOptions. Use this option to pass full JWT verifying options when needed. It will override the `algorithm` and `expiresIn`.
 - **authHeader?**: string. Defines header name where the token is placed, default to "authorization".
 - **requestProperty**?: string. Defines property name in request where the JWT payload is placed, default to "auth".
 - **getToken?**: function. Define a function to get the token from somewhere else instead of `authHeader`.
