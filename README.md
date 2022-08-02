@@ -12,7 +12,8 @@ Options has the following parameters:
   Expressed in seconds or a string describing a time span [zeit/ms](https://github.com/vercel/ms).  
   Eg: 60, "2 days", "10h", "7d". A numeric value is interpreted as a seconds count.   
   If you use a string be sure you provide the time units (days, hours, etc), otherwise milliseconds unit is used by default ("120" is equal to "120ms").
-- **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1].  
+- **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1]. This is
+  a simpler way to implement refresh token.
   For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).  
   With this options, if the user has a valid token and accesses the server within a valid time, then the user can always log in without a password.  
   Defaults to 0, the token will not refresh automatically. 
@@ -93,7 +94,7 @@ server.listen(9001, '127.0.0.1', () => {
 });
 ```
 
-2. Login with correct user, the server will send the token.
+2. Login with correct user, you can get the token in the "authorization" header.
 ```
 $ curl -i -s -X POST -d user=tester -l "http://127.0.0.1:9001/login"
 HTTP/1.1 200 OK    
