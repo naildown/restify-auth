@@ -6,15 +6,12 @@ A Restify authorization middleware based on the [jsonwebtoken](https://www.npmjs
 `restifyAuth(options)`
 
 Options has the following parameters:
-- **secret**: jwt.Secret. Defines JWT signature secret or a funciton to retrieve it.
+- **secret**: jwt.Secret. Defines JWT verification secret or a funciton to retrieve it. For single-serverapplications, it's also the signature secret when you issue tokens through this.
 - **algorithm?**: jwt.Algorithm. Defines JWT algorithm, default to "HS256".
 - **expiresIn?**: string || number. Defines expiration time of token, default to "1h" (1 hour).
-  Expressed in seconds or a string describing a time span [zeit/ms](https://github.com/vercel/ms).  
-  Eg: 60, "2 days", "10h", "7d". A numeric value is interpreted as a seconds count.   
-  If you use a string be sure you provide the time units (days, hours, etc), otherwise milliseconds unit is used by default ("120" is equal to "120ms").
-- **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1]. This is
-  a simpler way to implement refresh token.
-  For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).  
+  Expressed in seconds or a string describing a time span [zeit/ms](https://github.com/vercel/ms). Eg: 60, "2 days", "10h", "7d". A numeric value is interpreted as a seconds count. If you use a string be sure you provide the time units (days, hours, etc), otherwise milliseconds unit is used by default ("120" is equal to "120ms").
+- **refreshRange?**: number. Defines a time range when to refresh the token, is a number in [0, 1]. This is a simpler way to implement refresh token.
+  For example, expiresIn is '5 days' and resreshRange is 0.6, token will be refreshed when the client accesses server in the last 3 days (5 * 0.6).
   With this options, if the user has a valid token and accesses the server within a valid time, then the user can always log in without a password.  
   Defaults to 0, the token will not refresh automatically. 
 - **signOptions?**: jwt.SignOptions. Use this option to pass full JWT signing options when needed. It will override the `algorithm` and `expiresIn`.
@@ -22,12 +19,10 @@ Options has the following parameters:
 - **authHeader?**: string. Defines header name where the token is placed, default to "authorization".
 - **requestProperty**?: string. Defines property name in request where the JWT payload is placed, default to "auth".
 - **getToken?**: function. Define a function to get the token from somewhere else instead of `authHeader`.
-- **ignored?**: string[]. Defines ignored request list, if the request is in this list, token validation will be ignored.  
-  Usually the login path needs to be added to here.  
-  Format: `<path>|[method1,method2...]`,  
-  for example: `['/login', '/auth|post', '/test|post,get']`.
-- **verifyHandler?**: function. Define a function to perform additional token validation. The default function will return True.
-- **refreshHandler?**: function. Define a function to perform additional token validation and return the new payload for signing token. The default function will return True and the origin payload.
+- **ignored?**: string[]. Defines ignored request list, if the request is in this list, token validation will be ignored. Usually the login path needs to be added to here.  
+  Format: `<path>[|method1,method2...]`. Eg: `['/login', '/auth|post', '/test|post,get']`.
+- **verifyHandler?**: function. Define a function to perform additional token validation. For example, to check if the token has been revoked.
+- **refreshHandler?**: function. Define a function to perform additional token validation and return the new payload for signing new token. When not defined, the original payload is used to issue new token.
 
 
 ## Installtion
@@ -49,7 +44,13 @@ server.get(
 ```
 
 ### Use authorization middleware.
-1. restify server code.
+```
+const auth = restifyAuth({ secret: 'test-secret' });
+
+server.use(auth.authorizer);
+```
+
+#### Server code example.
 ```
 import { createServer, plugins } from 'restify';
 import { restifyAuth } from 'restify-auth';
@@ -93,8 +94,8 @@ server.listen(9001, '127.0.0.1', () => {
   console.log('%s listening at %s', server.name, server.url);
 });
 ```
-
-2. Login with correct user, you can get the token in the "authorization" header.
+#### Client example
+1. Login with correct user, you can get the token in the "authorization" header.
 ```
 $ curl -i -s -X POST -d user=tester -l "http://127.0.0.1:9001/login"
 HTTP/1.1 200 OK    
@@ -109,26 +110,21 @@ Keep-Alive: timeout=5
 {"success":true}
 ```
 
-3. Access with correct token, authorization is passed.
+2. Access with correct token, authorization is passed.
 ```
 $ curl -H "authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoidGVzdGVyIiwiaWF0IjoxNjU2NTc4NzkxLCJleHAiOjE2NTY1ODIzOTF9.y_RoXlBaBiznQ8-furj4fA1-EPHCTaZaCc6MSuBsb70" "http://127.0.0.1:9001/getauth"
-{"user":"tester","iat":1656578791,"exp":1656582391}
+
+{"user":"tester","iat":1659943287,"exp":1659946887}
 ```
 
-4. Access with invalid token or without token, authorization is failed.
+3. Access with invalid token or without token, authorization is failed.
 ```
 $ curl -H "authorization: Bearer 111.222.333" http://127.0.0.1:9001/getauth
+
 {"code":"Unauthorized","message":"jwt - invalid token."}
 ```
 ```
-$ curl -i http://127.0.0.1:9001/getauth
-HTTP/1.1 401 Unauthorized
-Server: test-server
-Content-Type: application/json
-Content-Length: 53
-Date: Thu, 30 Jun 2022 09:46:08 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
+$ curl http://127.0.0.1:9001/getauth
 
 {"code":"Unauthorized","message":"token is required"}
 ```
@@ -149,7 +145,7 @@ const auth = restifyAuth({
   // when the user accesses server with a valid token at:
   //   day 1 to day 4, authorization is passed;
   //   day 5 to day 10, authorization is passed and a new issued token is sent to the client;
-  //   after day 11, authorization will be failed if the token has not been updated;
+  //   from day 11, authorization will fail if the token has never been updated;
 })
 ```
 
@@ -177,7 +173,7 @@ const auth = restifyAuth({
 ```
 
 ### Retrieve secret from other sources
-- You can define a funciton to retrieve secret from other sources.
+- You can define a funciton to dynamically retrieve secret from other sources.
 ```
 const auth = restifyAuth({
   secret: async (req?: Request, decoded?: jwtPayload) => {
